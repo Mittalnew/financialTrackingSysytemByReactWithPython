@@ -1,29 +1,29 @@
-# Fintrack Backend (easy)
+# Fintrack API
 
-React app `src/api.ts` se yahan call karti hai.
+FastAPI backend for the Fintrack React app (`src/api.ts`).
 
 ```
-Browser (React :5173)  →  FastAPI (:8001)  →  SQLite (fintrack.db)
+Browser (Vite :5173) → FastAPI (:8001) → SQLite (fintrack.db)
 ```
 
 ---
 
-## Folder map
+## Layout
 
-| File | Kaam |
+| File | Role |
 |------|------|
-| `main.py` | App start + CORS + routers |
-| `database.py` | SQLite + `get_db` |
-| `models.py` | Tables: User, Transaction, Budget |
-| `schemas.py` | JSON shapes (≈ frontend `types.ts`) |
-| `auth_utils.py` | Password hash + JWT + current user |
-| `routers/auth.py` | signup / login / me |
-| `routers/transactions.py` | list / add / edit / delete |
-| `routers/budgets.py` | list / upsert / delete |
+| `main.py` | App entry, CORS, routers |
+| `database.py` | SQLite engine + `get_db` |
+| `models.py` | SQLAlchemy models (`User`, `Transaction`, `Budget`) |
+| `schemas.py` | Pydantic request/response shapes |
+| `auth_utils.py` | Password hashing, JWT, `get_current_user` |
+| `routers/auth.py` | Signup, login, profile |
+| `routers/transactions.py` | Transaction CRUD |
+| `routers/budgets.py` | Budget list / upsert / delete |
 
 ---
 
-## Kaise chalaye (Windows)
+## Run (Windows)
 
 ```bash
 cd backend
@@ -34,29 +34,33 @@ uvicorn main:app --reload --port 8001
 ```
 
 - Health: http://127.0.0.1:8001/
-- Docs: http://127.0.0.1:8001/docs
+- OpenAPI docs: http://127.0.0.1:8001/docs
 
-Frontend `.env`: `VITE_API_URL=http://127.0.0.1:8001`
+Frontend `.env`:
 
----
-
-## Main routes
-
-| Method | Path | Auth? |
-|--------|------|-------|
-| POST | `/auth/signup` | no |
-| POST | `/auth/login` | no |
-| GET/PATCH | `/auth/me` | yes |
-| GET/POST | `/transactions` | yes |
-| PUT/DELETE | `/transactions/{id}` | yes |
-| GET/PUT | `/budgets` | yes |
-| DELETE | `/budgets/{category}` | yes |
-
-Header: `Authorization: Bearer <token>`
+```
+VITE_API_URL=http://127.0.0.1:8001
+```
 
 ---
 
-## Frontend flow
+## Endpoints
+
+| Method | Path | Auth |
+|--------|------|------|
+| `POST` | `/auth/signup` | No |
+| `POST` | `/auth/login` | No |
+| `GET` / `PATCH` | `/auth/me` | Bearer JWT |
+| `GET` / `POST` | `/transactions` | Bearer JWT |
+| `PUT` / `DELETE` | `/transactions/{id}` | Bearer JWT |
+| `GET` / `PUT` | `/budgets` | Bearer JWT |
+| `DELETE` | `/budgets/{category}` | Bearer JWT |
+
+Header format: `Authorization: Bearer <token>`
+
+---
+
+## Data flow
 
 ```
 UI → Redux thunk → api.ts → FastAPI → SQLite → JSON → Redux → pages
