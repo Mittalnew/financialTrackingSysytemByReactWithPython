@@ -1,9 +1,9 @@
 # Fintrack API
 
-FastAPI backend for the Fintrack React app (`src/api.ts`).
+FastAPI backend for the Fintrack React client.
 
 ```
-Browser (Vite :5173) → FastAPI (:8001) → SQLite (fintrack.db)
+React app  →  FastAPI  →  SQLite
 ```
 
 ---
@@ -13,55 +13,40 @@ Browser (Vite :5173) → FastAPI (:8001) → SQLite (fintrack.db)
 | File | Role |
 |------|------|
 | `main.py` | App entry, CORS, routers |
-| `database.py` | SQLite engine + `get_db` |
-| `models.py` | SQLAlchemy models (`User`, `Transaction`, `Budget`) |
+| `database.py` | SQLite engine + session helper |
+| `models.py` | SQLAlchemy models |
 | `schemas.py` | Pydantic request/response shapes |
-| `auth_utils.py` | Password hashing, JWT, `get_current_user` |
-| `routers/auth.py` | Signup, login, profile |
-| `routers/transactions.py` | Transaction CRUD |
-| `routers/budgets.py` | Budget list / upsert / delete |
+| `auth_utils.py` | Password hashing, JWT, current user |
+| `routers/` | Auth, transactions, budgets |
 
 ---
 
-## Run (Windows)
+## Run
 
 ```bash
 cd backend
 python -m venv .venv
-.\.venv\Scripts\activate
+# Windows: .\.venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn main:app --reload --port 8001
+uvicorn main:app --reload
 ```
 
-- Health: http://127.0.0.1:8001/
-- OpenAPI docs: http://127.0.0.1:8001/docs
-
-Frontend `.env`:
-
-```
-VITE_API_URL=http://127.0.0.1:8001
-```
+Interactive docs are available at the server’s `/docs` path after start.  
+Point the frontend `VITE_API_URL` at that API origin (see root `.env.example`).
 
 ---
 
-## Endpoints
+## Main endpoints
 
 | Method | Path | Auth |
 |--------|------|------|
 | `POST` | `/auth/signup` | No |
 | `POST` | `/auth/login` | No |
-| `GET` / `PATCH` | `/auth/me` | Bearer JWT |
-| `GET` / `POST` | `/transactions` | Bearer JWT |
-| `PUT` / `DELETE` | `/transactions/{id}` | Bearer JWT |
-| `GET` / `PUT` | `/budgets` | Bearer JWT |
-| `DELETE` | `/budgets/{category}` | Bearer JWT |
+| `GET` / `PATCH` | `/auth/me` | Yes |
+| `GET` / `POST` | `/transactions` | Yes |
+| `PUT` / `DELETE` | `/transactions/{id}` | Yes |
+| `GET` / `PUT` | `/budgets` | Yes |
+| `DELETE` | `/budgets/{category}` | Yes |
 
-Header format: `Authorization: Bearer <token>`
-
----
-
-## Data flow
-
-```
-UI → Redux thunk → api.ts → FastAPI → SQLite → JSON → Redux → pages
-```
+Protected routes expect: `Authorization: Bearer <token>`
