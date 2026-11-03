@@ -1,5 +1,11 @@
 # Fintrack
 
+> ## 🚧 WORK IN PROGRESS — COMING SOON
+>
+> **Active development is ongoing.**  
+> Many new features are being added. Expect frequent updates, incomplete areas, and breaking changes.  
+> Star / watch the repo if you want to follow along — a fuller release is coming soon.
+
 Personal finance tracker built around a simple idea: **salary → spend → leftover**.
 
 Track income and expenses, set category budgets, and see what’s left for the month — with a clear dashboard and basic analytics.
@@ -67,11 +73,14 @@ backend/      FastAPI app (auth, transactions, budgets)
 
 ---
 
-## Roadmap
+## Roadmap (in progress)
+
+More features are landing soon, including polish, deploy, and further product improvements. Current ideas:
 
 - Deploy frontend + API  
 - Optional: Postgres or MongoDB instead of SQLite  
+- Additional finance workflows and UX upgrades  
 
 ---
 
-Personal project / portfolio demo.
+Personal project / portfolio demo · **under active development**.
