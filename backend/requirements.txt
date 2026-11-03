@@ -1,0 +1,8 @@
+# Backend packages — install with: pip install -r requirements.txt
+fastapi==0.115.8
+uvicorn==0.34.0
+sqlalchemy==2.0.38
+pydantic==2.10.6
+python-multipart==0.0.20
+PyJWT==2.10.1
+bcrypt==4.2.1
