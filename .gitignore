@@ -17,6 +17,10 @@ dist-ssr
 .env.*
 !.env.example
 
+# Local-only learning notes (do not publish)
+README.hinglish.md
+backend/README.hinglish.md
+
 # Backend local junk (also in backend/.gitignore)
 backend/.venv/
 backend/**/__pycache__/
