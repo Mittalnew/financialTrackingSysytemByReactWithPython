@@ -5,7 +5,9 @@ Frontend types.ts ke close cousins:
   User / Transaction / Budget
 """
 
-from sqlalchemy import String, Float, ForeignKey, UniqueConstraint
+from datetime import datetime
+
+from sqlalchemy import String, Float, ForeignKey, UniqueConstraint, Boolean, Integer, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
@@ -21,8 +23,42 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(200))
     currency: Mapped[str] = mapped_column(String(40), default="INR (₹)")
 
+    # Must click email link before login
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Wrong-password lockout
+    failed_login_count: Mapped[int] = mapped_column(Integer, default=0)
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
     transactions: Mapped[list["Transaction"]] = relationship(back_populates="owner")
     budgets: Mapped[list["Budget"]] = relationship(back_populates="owner")
+
+
+class RefreshSession(Base):
+    """
+    Long-lived login session. We store only a hash of the refresh token.
+    Logout / password change → delete the row → token stops working.
+    """
+
+    __tablename__ = "refresh_sessions"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class EmailToken(Base):
+    """One-time link for verify-email or reset-password."""
+
+    __tablename__ = "email_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    purpose: Mapped[str] = mapped_column(String(20))  # "verify" | "reset"
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    used: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class Transaction(Base):
@@ -36,14 +72,12 @@ class Transaction(Base):
     amount: Mapped[float] = mapped_column(Float)
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
-    # Which user owns this row
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     owner: Mapped["User"] = relationship(back_populates="transactions")
 
 
 class Budget(Base):
     __tablename__ = "budgets"
-    # One limit per category per user
     __table_args__ = (UniqueConstraint("user_id", "category", name="uniq_user_category"),)
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)

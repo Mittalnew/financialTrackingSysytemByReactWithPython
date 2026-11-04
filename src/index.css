@@ -72,6 +72,21 @@ body {
   animation: fade-in 0.4s ease-out both;
 }
 
+@keyframes auth-slide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-slide {
+  animation: auth-slide 0.45s ease-out both;
+}
+
 /* Keyboard focus — visible ring without changing mouse clicks much */
 :focus-visible {
   outline: 2px solid #0b7a6e;

@@ -24,8 +24,30 @@ export default function Dashboard() {
   const categorySpend = expenseByCategory(thisMonth)
   const recent = [...items].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
 
+  const isNewUser = items.length === 0
+
   return (
     <div className="animate-rise space-y-5">
+      {isNewUser && (
+        <section className="rounded-2xl border border-[#0b7a6e]/25 bg-[#e7efe9] px-5 py-4">
+          <h2 className="text-base font-semibold text-[#14201c]">Start in 2 steps</h2>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-[#3d4f47]">
+            <li>
+              Add this month’s <strong className="font-medium text-[#14201c]">salary</strong> (income).
+            </li>
+            <li>
+              Log spends — Dashboard shows what’s <strong className="font-medium text-[#14201c]">left</strong>.
+            </li>
+          </ol>
+          <Link
+            to="/transactions"
+            className="mt-3 inline-block rounded-lg bg-[#0b7a6e] px-4 py-2 text-sm font-medium text-white hover:bg-[#086057]"
+          >
+            Add first transaction
+          </Link>
+        </section>
+      )}
+
       {/* Hook: Salary → Spend → Left */}
       <section className="overflow-hidden rounded-2xl border border-[#d5e4da] bg-white shadow-panel">
         <div className="flex flex-col gap-5 p-5 lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:p-6">

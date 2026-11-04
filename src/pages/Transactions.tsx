@@ -20,6 +20,7 @@ import {
 } from '../store/transactionsSlice'
 import type { Transaction } from '../types'
 import { applyFilters, monthFilterOptions } from '../utils/filters'
+import { downloadCsv, transactionsToCsv } from '../utils/csv'
 import { formatDate, formatINR, monthLabel } from '../utils/format'
 
 export default function Transactions() {
@@ -75,9 +76,28 @@ export default function Transactions() {
     }
   }
 
+  function handleExportCsv() {
+    if (rows.length === 0) {
+      showToast('Nothing to export', 'error')
+      return
+    }
+    downloadCsv(`fintrack-transactions-${Date.now()}.csv`, transactionsToCsv(rows))
+    showToast('CSV downloaded')
+  }
+
   return (
     <div className="animate-rise">
-      <Header title="Transactions" action={<Button onClick={openAdd}>Add transaction</Button>} />
+      <Header
+        title="Transactions"
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="secondary" onClick={handleExportCsv}>
+              Export CSV
+            </Button>
+            <Button onClick={openAdd}>Add transaction</Button>
+          </div>
+        }
+      />
 
       <Card>
         <div className="mb-5 flex flex-wrap items-end gap-3">

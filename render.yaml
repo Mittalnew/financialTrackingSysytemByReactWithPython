@@ -1,0 +1,45 @@
+# Render Blueprint — connect this repo, then set secret env values in the dashboard.
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  # ---------- FastAPI (Docker) ----------
+  - type: web
+    name: fintrack-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: Fintrack <onboarding@resend.dev>
+      - key: FRONTEND_URL
+        sync: false
+      - key: API_PUBLIC_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+
+  # ---------- React static site ----------
+  - type: web
+    name: fintrack-web
+    runtime: static
+    plan: free
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false

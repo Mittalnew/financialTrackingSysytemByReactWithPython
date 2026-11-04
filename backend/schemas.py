@@ -22,21 +22,67 @@ class LoginIn(BaseModel):
 
 
 class UserOut(BaseModel):
-    id: str  # string so frontend User.id stays string-friendly
+    id: str
     name: str
     email: str
     currency: str
 
 
 class TokenOut(BaseModel):
-    token: str
+    """Returned after login (and after refresh we only need access — see RefreshOut)."""
+
+    access_token: str
+    refresh_token: str
     user: UserOut
+
+
+class RefreshIn(BaseModel):
+    refresh_token: str
+
+
+class RefreshOut(BaseModel):
+    access_token: str
+    refresh_token: str
+
+
+class LogoutIn(BaseModel):
+    refresh_token: str
 
 
 class ProfileUpdate(BaseModel):
     name: str | None = None
     email: str | None = None
     currency: str | None = None
+
+
+class ChangePasswordIn(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=4)
+
+
+class ForgotPasswordIn(BaseModel):
+    """Only email — we send a reset link (never set password here)."""
+
+    email: str
+
+
+class ResendVerifyIn(BaseModel):
+    """Only email — send a new verify link if account exists and is unverified."""
+
+    email: str
+
+
+class ResetPasswordIn(BaseModel):
+    token: str
+    new_password: str = Field(min_length=4)
+
+
+class VerifyEmailIn(BaseModel):
+    token: str
+
+
+class MessageOut(BaseModel):
+    message: str
 
 
 # ---------- Transactions ----------
@@ -46,7 +92,7 @@ class TransactionIn(BaseModel):
     date: str
     title: str
     category: str
-    type: str  # income | expense
+    type: str
     amount: float = Field(gt=0)
     notes: str | None = None
 

@@ -6,10 +6,13 @@ import Sidebar from './components/layout/Sidebar'
 import { ToastProvider } from './context/ToastContext'
 import Analytics from './pages/Analytics'
 import Dashboard from './pages/Dashboard'
+import ForgotPassword from './pages/ForgotPassword'
 import Login from './pages/Login'
+import ResetPassword from './pages/ResetPassword'
 import Settings from './pages/Settings'
 import Signup from './pages/Signup'
 import Transactions from './pages/Transactions'
+import VerifyEmail from './pages/VerifyEmail'
 import { useAppSelector } from './store'
 
 /** Redirect to login if there is no saved user. */
@@ -77,6 +80,9 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>

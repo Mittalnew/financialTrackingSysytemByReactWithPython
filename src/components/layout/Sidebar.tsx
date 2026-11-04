@@ -1,8 +1,11 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { LuLayoutDashboard } from 'react-icons/lu'
 import { HiOutlineArrowsRightLeft } from 'react-icons/hi2'
-import { IoAnalyticsOutline, IoSettingsOutline } from 'react-icons/io5'
-import { useAppSelector } from '../../store'
+import { IoAnalyticsOutline, IoLogOutOutline, IoSettingsOutline } from 'react-icons/io5'
+import { useAppDispatch, useAppSelector } from '../../store'
+import { logoutUser } from '../../store/authSlice'
+import { clearBudgets } from '../../store/budgetsSlice'
+import { clearTransactions } from '../../store/transactionsSlice'
 import { initials } from '../../utils/format'
 
 const LINKS = [
@@ -19,6 +22,16 @@ type Props = {
 
 export default function Sidebar({ onNavigate }: Props) {
   const user = useAppSelector((s) => s.auth.user)
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    onNavigate?.()
+    dispatch(clearTransactions())
+    dispatch(clearBudgets())
+    await dispatch(logoutUser())
+    navigate('/login')
+  }
 
   return (
     <aside className="flex h-full w-56 shrink-0 flex-col border-r border-[#d5e4da] bg-[#fbfdfb] px-3 py-5">
@@ -47,14 +60,25 @@ export default function Sidebar({ onNavigate }: Props) {
         ))}
       </nav>
 
-      <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-[#d5e4da] bg-white px-2.5 py-2.5">
-        <div className="grid h-8 w-8 place-items-center rounded-lg bg-[#0b7a6e] text-[11px] font-semibold text-white">
-          {user ? initials(user.name) : 'U'}
+      <div className="mt-3 space-y-2">
+        <div className="flex items-center gap-2.5 rounded-xl border border-[#d5e4da] bg-white px-2.5 py-2.5">
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-[#0b7a6e] text-[11px] font-semibold text-white">
+            {user ? initials(user.name) : 'U'}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-[#14201c]">{user?.name}</p>
+            <p className="truncate text-[11px] text-[#5c6b64]">{user?.email}</p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-[#14201c]">{user?.name}</p>
-          <p className="truncate text-[11px] text-[#5c6b64]">{user?.email}</p>
-        </div>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-[#3d4f47] hover:bg-[#e7efe9] hover:text-[#14201c]"
+        >
+          <IoLogOutOutline size={17} />
+          Log out
+        </button>
       </div>
     </aside>
   )

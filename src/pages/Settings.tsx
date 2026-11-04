@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { apiChangePassword } from '../api'
 import Header from '../components/layout/Header'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
@@ -8,7 +9,7 @@ import Select from '../components/ui/Select'
 import { BUDGET_CATEGORIES } from '../constants'
 import { useToast } from '../context/ToastContext'
 import { useAppDispatch, useAppSelector } from '../store'
-import { logout, saveProfile } from '../store/authSlice'
+import { logoutUser, saveProfile } from '../store/authSlice'
 import { clearBudgets, removeBudget, setBudget } from '../store/budgetsSlice'
 import { clearTransactions } from '../store/transactionsSlice'
 import { initials, formatINR } from '../utils/format'
@@ -27,6 +28,10 @@ export default function Settings() {
   const [category, setCategory] = useState<string>(BUDGET_CATEGORIES[0])
   const [limit, setLimit] = useState('5000')
 
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault()
     try {
@@ -37,11 +42,35 @@ export default function Settings() {
     }
   }
 
-  function handleLogout() {
+  async function handleLogout() {
     dispatch(clearTransactions())
     dispatch(clearBudgets())
-    dispatch(logout())
+    await dispatch(logoutUser())
     navigate('/login')
+  }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault()
+    if (newPassword !== confirmPassword) {
+      showToast('New passwords do not match', 'error')
+      return
+    }
+    if (newPassword.length < 4) {
+      showToast('New password must be at least 4 characters', 'error')
+      return
+    }
+    try {
+      await apiChangePassword({
+        current_password: currentPassword,
+        new_password: newPassword,
+      })
+      showToast('Password updated')
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Password update failed', 'error')
+    }
   }
 
   async function handleSaveBudget(e: React.FormEvent) {
@@ -70,10 +99,12 @@ export default function Settings() {
 
   return (
     <div className="animate-rise space-y-5">
-      <Header title="Settings" subtitle="Profile + monthly category budgets." />
+      <Header title="Settings" subtitle="Profile, password, and monthly budgets." />
 
       <Card className="max-w-xl">
-        <h3 className="mb-5 text-xs font-semibold uppercase tracking-wide text-[#5c6b64]">Profile</h3>
+        <h3 className="mb-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5c6b64]">
+          Profile
+        </h3>
 
         <form onSubmit={handleSaveProfile} className="space-y-4">
           <div className="grid h-16 w-16 place-items-center rounded-2xl bg-[#0b7a6e] text-lg font-semibold text-white">
@@ -99,7 +130,40 @@ export default function Settings() {
       </Card>
 
       <Card className="max-w-xl">
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#5c6b64]">
+        <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5c6b64]">
+          Change password
+        </h3>
+        <p className="mb-4 text-sm text-[#5c6b64]">Update your password while signed in.</p>
+        <form onSubmit={handleChangePassword} className="space-y-4">
+          <Input
+            label="Current password"
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            required
+          />
+          <Input
+            label="New password"
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            required
+            minLength={4}
+          />
+          <Input
+            label="Confirm new password"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            minLength={4}
+          />
+          <Button type="submit">Update password</Button>
+        </form>
+      </Card>
+
+      <Card className="max-w-xl">
+        <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5c6b64]">
           Monthly budgets
         </h3>
         <p className="mb-4 text-sm text-[#5c6b64]">

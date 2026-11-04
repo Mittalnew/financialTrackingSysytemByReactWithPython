@@ -1,0 +1,30 @@
+# Local full stack: API (FastAPI) + Web (nginx)
+# Usage (from project root):
+#   docker compose up --build
+# API: http://127.0.0.1:8003
+# Web: http://127.0.0.1:8080
+
+services:
+  api:
+    build: ./backend
+    ports:
+      - "8003:8000"
+    env_file:
+      - .env
+    environment:
+      # Inside compose, emails still need a URL the browser can open
+      PORT: "8000"
+      API_PUBLIC_URL: ${API_PUBLIC_URL:-http://127.0.0.1:8003}
+      FRONTEND_URL: ${FRONTEND_URL:-http://127.0.0.1:8080}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://127.0.0.1:8080,http://localhost:8080,http://127.0.0.1:5173}
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://127.0.0.1:8003}
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
