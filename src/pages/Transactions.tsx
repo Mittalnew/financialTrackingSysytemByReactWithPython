@@ -10,6 +10,7 @@ import Modal from '../components/ui/Modal'
 import Select from '../components/ui/Select'
 import TransactionForm from '../components/TransactionForm'
 import { CATEGORIES } from '../constants'
+import Spinner, { PageLoader, useDataReady } from '../components/ui/Spinner'
 import { useToast } from '../context/ToastContext'
 import { useAppDispatch, useAppSelector } from '../store'
 import {
@@ -24,6 +25,7 @@ import { downloadCsv, transactionsToCsv } from '../utils/csv'
 import { formatDate, formatINR, monthLabel } from '../utils/format'
 
 export default function Transactions() {
+  const ready = useDataReady()
   const dispatch = useAppDispatch()
   const { showToast } = useToast()
   const { items, filters } = useAppSelector((s) => s.transactions)
@@ -31,6 +33,8 @@ export default function Transactions() {
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Transaction | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const monthOptions = [
     { value: '', label: 'All months' },
@@ -53,6 +57,7 @@ export default function Transactions() {
   }
 
   async function handleSave(data: Omit<Transaction, 'id'> & { id?: string }) {
+    setSaving(true)
     try {
       if (editing) {
         await dispatch(updateTransaction({ ...data, id: editing.id })).unwrap()
@@ -64,15 +69,20 @@ export default function Transactions() {
       closeModal()
     } catch (err) {
       showToast(typeof err === 'string' ? err : 'Save failed', 'error')
+    } finally {
+      setSaving(false)
     }
   }
 
   async function handleDelete(id: string) {
+    setDeletingId(id)
     try {
       await dispatch(deleteTransaction(id)).unwrap()
       showToast('Transaction deleted')
     } catch (err) {
       showToast(typeof err === 'string' ? err : 'Delete failed', 'error')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -84,6 +94,8 @@ export default function Transactions() {
     downloadCsv(`fintrack-transactions-${Date.now()}.csv`, transactionsToCsv(rows))
     showToast('CSV downloaded')
   }
+
+  if (!ready) return <PageLoader />
 
   return (
     <div className="animate-rise">
@@ -138,59 +150,85 @@ export default function Transactions() {
             }
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="text-ink-muted">
-                  <th className="whitespace-nowrap px-3 py-2 font-medium">Date</th>
-                  <th className="px-3 py-2 font-medium">Description</th>
-                  <th className="px-3 py-2 font-medium">Category</th>
-                  <th className="px-3 py-2 font-medium">Type</th>
-                  <th className="px-3 py-2 text-right font-medium">Amount</th>
-                  <th className="px-3 py-2 font-medium" />
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((tx) => (
-                  <tr key={tx.id} className="border-t border-[var(--line)] transition-colors hover:bg-white/50">
-                    <td className="whitespace-nowrap px-3 py-3 text-ink-muted">{formatDate(tx.date)}</td>
-                    <td className="px-3 py-3 font-medium">{tx.title}</td>
-                    <td className="px-3 py-3">
-                      <Badge>{tx.category}</Badge>
-                    </td>
-                    <td className="px-3 py-3">
-                      <Badge tone={tx.type}>{tx.type === 'income' ? 'Income' : 'Expense'}</Badge>
-                    </td>
-                    <td
-                      className={`px-3 py-3 text-right font-medium ${
-                        tx.type === 'income' ? 'text-brand' : 'text-ink'
+          <>
+            <ul className="flex flex-col gap-3 md:hidden">
+              {rows.map((tx) => (
+                <li
+                  key={tx.id}
+                  className="rounded-2xl border border-[#e7efe9] bg-[#fbfdfb] px-3.5 py-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-[#14201c]">{tx.title}</p>
+                      <p className="mt-0.5 text-xs text-[#5c6b64]">{formatDate(tx.date)}</p>
+                    </div>
+                    <p
+                      className={`shrink-0 text-sm font-semibold ${
+                        tx.type === 'income' ? 'text-brand' : 'text-[#14201c]'
                       }`}
                     >
+                      {tx.type === 'income' ? '+' : '−'}
                       {formatINR(tx.amount)}
-                    </td>
-                    <td className="px-3 py-3">
-                      <div className="flex justify-end gap-3">
-                        <button
-                          type="button"
-                          className="text-ink-muted hover:text-ink"
-                          onClick={() => openEdit(tx)}
-                        >
-                          <FiEdit2 />
-                        </button>
-                        <button
-                          type="button"
-                          className="text-coral hover:opacity-80"
-                          onClick={() => handleDelete(tx.id)}
-                        >
-                          <FiTrash2 />
-                        </button>
-                      </div>
-                    </td>
+                    </p>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      <Badge>{tx.category}</Badge>
+                      <Badge tone={tx.type}>{tx.type === 'income' ? 'Income' : 'Expense'}</Badge>
+                    </div>
+                    <RowActions
+                      deleting={deletingId === tx.id}
+                      onEdit={() => openEdit(tx)}
+                      onDelete={() => handleDelete(tx.id)}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="text-ink-muted">
+                    <th className="whitespace-nowrap px-3 py-2 font-medium">Date</th>
+                    <th className="px-3 py-2 font-medium">Description</th>
+                    <th className="px-3 py-2 font-medium">Category</th>
+                    <th className="px-3 py-2 font-medium">Type</th>
+                    <th className="px-3 py-2 text-right font-medium">Amount</th>
+                    <th className="px-3 py-2 font-medium" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {rows.map((tx) => (
+                    <tr key={tx.id} className="border-t border-[var(--line)] transition-colors hover:bg-white/50">
+                      <td className="whitespace-nowrap px-3 py-3 text-ink-muted">{formatDate(tx.date)}</td>
+                      <td className="px-3 py-3 font-medium">{tx.title}</td>
+                      <td className="px-3 py-3">
+                        <Badge>{tx.category}</Badge>
+                      </td>
+                      <td className="px-3 py-3">
+                        <Badge tone={tx.type}>{tx.type === 'income' ? 'Income' : 'Expense'}</Badge>
+                      </td>
+                      <td
+                        className={`px-3 py-3 text-right font-medium ${
+                          tx.type === 'income' ? 'text-brand' : 'text-ink'
+                        }`}
+                      >
+                        {formatINR(tx.amount)}
+                      </td>
+                      <td className="px-3 py-3">
+                        <RowActions
+                          deleting={deletingId === tx.id}
+                          onEdit={() => openEdit(tx)}
+                          onDelete={() => handleDelete(tx.id)}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Card>
 
@@ -199,8 +237,35 @@ export default function Transactions() {
         title={editing ? 'Edit transaction' : 'Add transaction'}
         onClose={closeModal}
       >
-        <TransactionForm initial={editing} onCancel={closeModal} onSave={handleSave} />
+        <TransactionForm initial={editing} saving={saving} onCancel={closeModal} onSave={handleSave} />
       </Modal>
+    </div>
+  )
+}
+
+function RowActions({
+  deleting,
+  onEdit,
+  onDelete,
+}: {
+  deleting: boolean
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  return (
+    <div className="flex justify-end gap-3">
+      <button type="button" className="text-ink-muted hover:text-ink" onClick={onEdit} aria-label="Edit">
+        <FiEdit2 />
+      </button>
+      <button
+        type="button"
+        className="text-coral hover:opacity-80 disabled:opacity-50"
+        disabled={deleting}
+        onClick={onDelete}
+        aria-label="Delete"
+      >
+        {deleting ? <Spinner size={14} /> : <FiTrash2 />}
+      </button>
     </div>
   )
 }

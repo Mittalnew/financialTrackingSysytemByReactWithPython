@@ -9,6 +9,7 @@ import type { Budget } from '../types'
 type BudgetsState = {
   items: Budget[]
   status: 'idle' | 'loading' | 'failed'
+  ready: boolean
   error: string | null
 }
 
@@ -51,6 +52,7 @@ const budgetsSlice = createSlice({
   initialState: {
     items: [],
     status: 'idle',
+    ready: false,
     error: null,
   } as BudgetsState,
   reducers: {
@@ -60,12 +62,18 @@ const budgetsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(fetchBudgets.pending, (state) => {
+        state.status = 'loading'
+        state.error = null
+      })
       .addCase(fetchBudgets.fulfilled, (state, action) => {
         state.status = 'idle'
+        state.ready = true
         state.items = action.payload
       })
       .addCase(fetchBudgets.rejected, (state, action) => {
         state.status = 'failed'
+        state.ready = true
         state.error = (action.payload as string) || 'Load failed'
       })
       .addCase(setBudget.fulfilled, (state, action) => {

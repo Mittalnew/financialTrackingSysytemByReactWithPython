@@ -5,11 +5,13 @@ import KpiCard from '../components/ui/KpiCard'
 import Header from '../components/layout/Header'
 import { CategoryBarChart, DailySpendChart, IncomeExpenseBars } from '../components/charts'
 import { ANALYTICS_RANGES } from '../constants'
+import { PageLoader, useDataReady } from '../components/ui/Spinner'
 import { useAppSelector } from '../store'
 import { formatCompactINR } from '../utils/format'
 import { expenseByCategory, inLastMonths, monthlyTotals, spendByDay, summary } from '../utils/stats'
 
 export default function Analytics() {
+  const ready = useDataReady()
   const items = useAppSelector((s) => s.transactions.items)
   const [months, setMonths] = useState(6)
 
@@ -18,6 +20,8 @@ export default function Analytics() {
   const byMonth = monthlyTotals(list, months)
   const byCategory = expenseByCategory(list)
   const byDay = spendByDay(list)
+
+  if (!ready) return <PageLoader />
 
   return (
     <div className="animate-rise">

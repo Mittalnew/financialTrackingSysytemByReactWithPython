@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Link, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { HiOutlineBars3 } from 'react-icons/hi2'
 import LoadUserData from './components/LoadUserData'
+import Bell from './components/layout/Bell'
 import Sidebar from './components/layout/Sidebar'
 import { ToastProvider } from './context/ToastContext'
 import Analytics from './pages/Analytics'
@@ -14,6 +15,7 @@ import Signup from './pages/Signup'
 import Transactions from './pages/Transactions'
 import VerifyEmail from './pages/VerifyEmail'
 import { useAppSelector } from './store'
+import { initials } from './utils/format'
 
 /** Redirect to login if there is no saved user. */
 function ProtectedRoute() {
@@ -25,6 +27,7 @@ function ProtectedRoute() {
 /** Shell: sidebar (drawer on mobile) + main content. */
 function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const user = useAppSelector((s) => s.auth.user)
 
   function closeMenu() {
     setMenuOpen(false)
@@ -52,16 +55,26 @@ function AppLayout() {
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center gap-3 border-b border-[#d5e4da] bg-[#fbfdfb] px-4 py-3 lg:hidden">
+        <div className="flex items-center gap-3 border-b border-[#d5e4da] bg-[#fbfdfb] px-4 py-2.5 lg:px-7">
           <button
             type="button"
             aria-label="Open menu"
-            className="rounded-lg p-1.5 text-[#14201c] hover:bg-[#e7efe9]"
+            className="rounded-lg p-1.5 text-[#14201c] hover:bg-[#e7efe9] lg:hidden"
             onClick={() => setMenuOpen(true)}
           >
             <HiOutlineBars3 size={22} />
           </button>
-          <span className="text-sm font-semibold text-[#14201c]">Fintrack</span>
+          <span className="text-sm font-semibold text-[#14201c] lg:hidden">Fintrack</span>
+          <div className="ml-auto flex items-center gap-1.5">
+            <Link
+              to="/settings"
+              aria-label="Profile"
+              className="grid h-8 w-8 place-items-center rounded-full bg-[#0b7a6e] text-[11px] font-semibold text-white"
+            >
+              {user ? initials(user.name) : 'U'}
+            </Link>
+            <Bell />
+          </div>
         </div>
 
         <main className="min-w-0 flex-1 overflow-y-auto p-5 lg:p-7">

@@ -4,6 +4,7 @@ import { apiVerifyEmail } from '../api'
 import AuthShell from '../components/layout/AuthShell'
 import Alert from '../components/ui/Alert'
 import Button from '../components/ui/Button'
+import Spinner from '../components/ui/Spinner'
 
 /** Opened from email/console link: /verify-email?token=... */
 export default function VerifyEmail() {
@@ -40,7 +41,12 @@ export default function VerifyEmail() {
   return (
     <AuthShell title="Verify email" subtitle="Confirming your account…">
       <div className="space-y-4">
-        {loading && <Alert tone="info" message="Verifying…" />}
+        {loading && (
+          <p className="flex items-center gap-2 text-sm text-[#5c6b64]">
+            <Spinner />
+            Verifying…
+          </p>
+        )}
         {error && <Alert tone="error" message={error} />}
         {ok && <Alert tone="info" message={ok} />}
         {!loading && (

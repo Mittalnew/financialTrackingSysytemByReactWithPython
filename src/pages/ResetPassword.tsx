@@ -74,7 +74,7 @@ export default function ResetPassword() {
               required
               minLength={4}
             />
-            <Button type="submit" className="w-full py-3" disabled={loading}>
+            <Button type="submit" className="w-full py-3" loading={loading}>
               {loading ? 'Saving…' : 'Update password'}
             </Button>
           </>

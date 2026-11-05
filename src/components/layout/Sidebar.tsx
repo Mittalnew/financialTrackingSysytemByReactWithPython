@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { LuLayoutDashboard } from 'react-icons/lu'
 import { HiOutlineArrowsRightLeft } from 'react-icons/hi2'
@@ -6,6 +7,7 @@ import { useAppDispatch, useAppSelector } from '../../store'
 import { logoutUser } from '../../store/authSlice'
 import { clearBudgets } from '../../store/budgetsSlice'
 import { clearTransactions } from '../../store/transactionsSlice'
+import Spinner from '../ui/Spinner'
 import { initials } from '../../utils/format'
 
 const LINKS = [
@@ -24,8 +26,10 @@ export default function Sidebar({ onNavigate }: Props) {
   const user = useAppSelector((s) => s.auth.user)
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const [loggingOut, setLoggingOut] = useState(false)
 
   async function handleLogout() {
+    setLoggingOut(true)
     onNavigate?.()
     dispatch(clearTransactions())
     dispatch(clearBudgets())
@@ -74,9 +78,10 @@ export default function Sidebar({ onNavigate }: Props) {
         <button
           type="button"
           onClick={handleLogout}
-          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-[#3d4f47] hover:bg-[#e7efe9] hover:text-[#14201c]"
+          disabled={loggingOut}
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-[#3d4f47] hover:bg-[#e7efe9] hover:text-[#14201c] disabled:opacity-50"
         >
-          <IoLogOutOutline size={17} />
+          {loggingOut ? <Spinner size={17} /> : <IoLogOutOutline size={17} />}
           Log out
         </button>
       </div>

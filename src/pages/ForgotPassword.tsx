@@ -50,7 +50,7 @@ export default function ForgotPassword() {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-            <Button type="submit" className="w-full py-3" disabled={loading}>
+            <Button type="submit" className="w-full py-3" loading={loading}>
               {loading ? 'Sending…' : 'Send reset link'}
             </Button>
           </>

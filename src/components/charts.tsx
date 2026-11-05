@@ -25,9 +25,9 @@ type MonthRow = { month: string; income: number; expense: number }
 type CategoryRow = { name: string; value: number }
 type DayRow = { name: string; amount: number }
 
-export function TrendChart({ data }: { data: MonthRow[] }) {
+export function TrendChart({ data, className = 'h-56' }: { data: MonthRow[]; className?: string }) {
   return (
-    <div className="h-48">
+    <div className={className}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(20,32,28,0.08)" />

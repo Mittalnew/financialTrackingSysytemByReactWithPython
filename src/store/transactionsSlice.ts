@@ -18,6 +18,7 @@ type TxState = {
   items: Transaction[]
   filters: Filters
   status: 'idle' | 'loading' | 'failed'
+  ready: boolean
   error: string | null
 }
 
@@ -78,6 +79,7 @@ const transactionsSlice = createSlice({
       type: 'all' as Filters['type'],
     },
     status: 'idle',
+    ready: false,
     error: null,
   } as TxState,
   reducers: {
@@ -96,10 +98,12 @@ const transactionsSlice = createSlice({
       })
       .addCase(fetchTransactions.fulfilled, (state, action) => {
         state.status = 'idle'
+        state.ready = true
         state.items = action.payload
       })
       .addCase(fetchTransactions.rejected, (state, action) => {
         state.status = 'failed'
+        state.ready = true
         state.error = (action.payload as string) || 'Load failed'
       })
       .addCase(addTransaction.fulfilled, (state, action) => {

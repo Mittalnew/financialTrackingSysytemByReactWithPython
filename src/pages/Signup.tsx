@@ -55,7 +55,7 @@ export default function Signup() {
               required
               minLength={4}
             />
-            <Button type="submit" className="w-full py-3" disabled={status === 'loading'}>
+            <Button type="submit" className="w-full py-3" loading={status === 'loading'}>
               {status === 'loading' ? 'Creating…' : 'Sign up'}
             </Button>
           </>

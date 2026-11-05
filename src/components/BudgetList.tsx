@@ -1,14 +1,16 @@
 import { Link } from 'react-router-dom'
+import { HiOutlineExclamationTriangle } from 'react-icons/hi2'
 import type { BudgetRow } from '../utils/budgets'
 import { formatINR } from '../utils/format'
 import EmptyState from './ui/EmptyState'
 
 type Props = {
   rows: BudgetRow[]
+  notes?: Record<string, string>
 }
 
 /** Simple progress bars: spent vs monthly limit. */
-export default function BudgetList({ rows }: Props) {
+export default function BudgetList({ rows, notes = {} }: Props) {
   if (rows.length === 0) {
     return (
       <EmptyState
@@ -42,6 +44,12 @@ export default function BudgetList({ rows }: Props) {
               style={{ width: `${row.percent}%` }}
             />
           </div>
+          {notes[row.category] && (
+            <p className="mt-1 flex items-center gap-1 text-xs text-[#d97757]">
+              <HiOutlineExclamationTriangle size={14} />
+              {notes[row.category]}
+            </p>
+          )}
         </li>
       ))}
     </ul>

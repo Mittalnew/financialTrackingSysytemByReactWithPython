@@ -68,7 +68,7 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <Button type="submit" className="w-full py-3" disabled={status === 'loading'}>
+        <Button type="submit" className="w-full py-3" loading={status === 'loading'}>
           {status === 'loading' ? 'Signing in…' : 'Sign in'}
         </Button>
 
@@ -77,7 +77,7 @@ export default function Login() {
             type="button"
             variant="secondary"
             className="w-full py-3"
-            disabled={resendBusy}
+            loading={resendBusy}
             onClick={handleResendVerify}
           >
             {resendBusy ? 'Sending…' : 'Resend verification email'}
