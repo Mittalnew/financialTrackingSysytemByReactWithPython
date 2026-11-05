@@ -10,7 +10,7 @@ import { addCategory } from '../store/categoriesSlice'
 /** Defaults plus any name this user has added. */
 export function useCategoryNames(includeSalary = true) {
   const saved = useAppSelector((s) => s.categories.items)
-  const names = [...CATEGORIES]
+  const names: string[] = [...CATEGORIES]
   for (const name of saved) {
     const exists = names.some((item) => item.toLowerCase() === name.toLowerCase())
     if (!exists) names.push(name)
