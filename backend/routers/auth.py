@@ -63,6 +63,8 @@ def signup(body: SignupIn, db: Session = Depends(get_db)):
         email=body.email.lower().strip(),
         password_hash=hash_password(body.password),
         email_verified=False,
+        onboarded=False,
+        savings_goal=0,
     )
     db.add(user)
     db.commit()
@@ -258,6 +260,10 @@ def update_me(
         user.email = body.email.lower().strip()
     if body.currency is not None:
         user.currency = body.currency
+    if body.savings_goal is not None:
+        user.savings_goal = body.savings_goal
+    if body.onboarded is not None:
+        user.onboarded = body.onboarded
     db.commit()
     db.refresh(user)
     return user_to_out(user)

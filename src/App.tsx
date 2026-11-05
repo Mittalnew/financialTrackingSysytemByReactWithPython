@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BrowserRouter, Link, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { HiOutlineBars3 } from 'react-icons/hi2'
 import LoadUserData from './components/LoadUserData'
 import Bell from './components/layout/Bell'
@@ -8,7 +8,9 @@ import { ToastProvider } from './context/ToastContext'
 import Analytics from './pages/Analytics'
 import Dashboard from './pages/Dashboard'
 import ForgotPassword from './pages/ForgotPassword'
+import Landing from './pages/Landing'
 import Login from './pages/Login'
+import Onboarding from './pages/Onboarding'
 import ResetPassword from './pages/ResetPassword'
 import Settings from './pages/Settings'
 import Signup from './pages/Signup'
@@ -17,10 +19,24 @@ import VerifyEmail from './pages/VerifyEmail'
 import { useAppSelector } from './store'
 import { initials } from './utils/format'
 
-/** Redirect to login if there is no saved user. */
-function ProtectedRoute() {
+/** Landing for guests. The app shell once someone is signed in. */
+function AppShell() {
   const user = useAppSelector((s) => s.auth.user)
-  if (!user) return <Navigate to="/login" replace />
+  const { pathname } = useLocation()
+  if (!user) {
+    if (pathname === '/') return <Landing />
+    return <Navigate to="/" replace />
+  }
+  return <AppLayout />
+}
+
+/** New accounts finish the plan before the rest of the app. */
+function NeedPlan() {
+  const user = useAppSelector((s) => s.auth.user)
+  const { pathname } = useLocation()
+  if (user && user.onboarded === false && pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />
+  }
   return <Outlet />
 }
 
@@ -97,8 +113,9 @@ export default function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AppLayout />}>
+          <Route element={<AppShell />}>
+            <Route element={<NeedPlan />}>
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/" element={<Dashboard />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/analytics" element={<Analytics />} />

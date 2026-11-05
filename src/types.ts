@@ -8,6 +8,9 @@ export type Transaction = {
   type: 'income' | 'expense'
   amount: number
   notes?: string
+  source?: 'manual' | 'statement'
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 export type Filters = {
@@ -22,6 +25,8 @@ export type User = {
   name: string
   email: string
   currency: string
+  savings_goal: number
+  onboarded: boolean
 }
 
 /** Monthly spend limit for one expense category. */

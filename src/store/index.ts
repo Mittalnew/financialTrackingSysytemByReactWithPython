@@ -2,6 +2,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
 import authReducer from './authSlice'
 import budgetsReducer from './budgetsSlice'
+import categoriesReducer from './categoriesSlice'
 import transactionsReducer from './transactionsSlice'
 
 export const store = configureStore({
@@ -9,6 +10,7 @@ export const store = configureStore({
     auth: authReducer,
     transactions: transactionsReducer,
     budgets: budgetsReducer,
+    categories: categoriesReducer,
   },
 })
 

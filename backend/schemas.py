@@ -26,6 +26,8 @@ class UserOut(BaseModel):
     name: str
     email: str
     currency: str
+    savings_goal: float = 0
+    onboarded: bool = False
 
 
 class TokenOut(BaseModel):
@@ -53,6 +55,8 @@ class ProfileUpdate(BaseModel):
     name: str | None = None
     email: str | None = None
     currency: str | None = None
+    savings_goal: float | None = None
+    onboarded: bool | None = None
 
 
 class ChangePasswordIn(BaseModel):
@@ -105,9 +109,32 @@ class TransactionOut(BaseModel):
     type: str
     amount: float
     notes: str | None = None
+    source: str = "manual"
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+class ImportRow(BaseModel):
+    date: str
+    title: str
+    category: str
+    type: str
+    amount: float = Field(gt=0)
+
+
+class ImportIn(BaseModel):
+    rows: list[ImportRow]
 
 
 # ---------- Budgets ----------
+
+
+class CategoryIn(BaseModel):
+    name: str = Field(min_length=1, max_length=40)
+
+
+class CategoryOut(BaseModel):
+    name: str
 
 
 class BudgetIn(BaseModel):

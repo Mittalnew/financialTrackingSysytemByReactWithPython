@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { HiOutlineCheckCircle, HiOutlineExclamationTriangle } from 'react-icons/hi2'
+import CategoryField from './CategoryField'
 import Button from './ui/Button'
 import Input from './ui/Input'
 import Select from './ui/Select'
-import { CATEGORIES } from '../constants'
 import { useAppSelector } from '../store'
 import type { Transaction } from '../types'
 import { todayISO } from '../utils/format'
@@ -25,13 +25,20 @@ export default function TransactionForm({ initial, saving = false, onSave, onCan
   const [notes, setNotes] = useState(initial?.notes ?? '')
   const items = useAppSelector((s) => s.transactions.items)
   const budgets = useAppSelector((s) => s.budgets.items)
-  const preview = previewSpend(items, budgets, {
-    id: initial?.id,
-    type,
-    amount: Number(amount),
-    category,
-    date,
-  })
+  const savingsGoal = useAppSelector((s) => s.auth.user?.savings_goal ?? 0)
+  const preview = previewSpend(
+    items,
+    budgets,
+    {
+      id: initial?.id,
+      type,
+      amount: Number(amount),
+      category,
+      date,
+    },
+    todayISO(),
+    savingsGoal,
+  )
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -85,12 +92,7 @@ export default function TransactionForm({ initial, saving = false, onSave, onCan
         onChange={(e) => setTitle(e.target.value)}
         required
       />
-      <Select
-        label="Category"
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
-        options={CATEGORIES.map((c) => ({ value: c, label: c }))}
-      />
+      <CategoryField value={category} onChange={setCategory} />
       <Input
         label="Date"
         type="date"

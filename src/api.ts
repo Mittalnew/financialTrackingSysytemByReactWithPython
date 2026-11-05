@@ -224,7 +224,25 @@ export function apiDeleteTransaction(id: string) {
   return request<{ ok: boolean }>(`/transactions/${id}`, { method: 'DELETE' })
 }
 
+export function apiImportStatement(rows: Omit<Transaction, 'id' | 'source'>[]) {
+  return request<Transaction[]>('/transactions/import', {
+    method: 'POST',
+    body: JSON.stringify({ rows }),
+  })
+}
+
 // ---------- Budgets ----------
+
+export function apiListCategories() {
+  return request<{ name: string }[]>('/categories')
+}
+
+export function apiAddCategory(name: string) {
+  return request<{ name: string }>('/categories', {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  })
+}
 
 export function apiListBudgets() {
   return request<Budget[]>('/budgets')

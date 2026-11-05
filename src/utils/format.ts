@@ -26,10 +26,33 @@ export function formatChartValue(value: unknown) {
   return formatINR(Number(value || 0))
 }
 
-/** "2026-10-04" → "04-10-2026" */
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** "2026-09-11" → "11 Sep 2026". This is the spend date, which has no clock time. */
 export function formatDate(iso: string) {
-  const [year, month, day] = iso.split('-')
-  return `${day}-${month}-${year}`
+  const [year, month, day] = iso.slice(0, 10).split('-')
+  const monthName = MONTHS[Number(month) - 1]
+  if (!year || !monthName || !day) return iso
+  return `${Number(day)} ${monthName} ${year}`
+}
+
+/** ISO timestamp → "11 Sep 2026, 11:04 pm IST". */
+export function formatStamp(value?: string | null) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).formatToParts(date)
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? ''
+  const monthName = MONTHS[Number(get('month')) - 1] ?? get('month')
+  return `${Number(get('day'))} ${monthName} ${get('year')}, ${get('hour')}:${get('minute')} ${get('dayPeriod').toLowerCase()} IST`
 }
 
 /** "2026-10" → "October 2026" */

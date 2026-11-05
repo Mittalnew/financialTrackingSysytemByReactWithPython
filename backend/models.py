@@ -5,7 +5,7 @@ Frontend types.ts ke close cousins:
   User / Transaction / Budget
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import String, Float, ForeignKey, UniqueConstraint, Boolean, Integer, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -30,8 +30,13 @@ class User(Base):
     failed_login_count: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
+    # Plan from onboarding. Existing users are marked onboarded by the startup ALTER.
+    savings_goal: Mapped[float] = mapped_column(Float, default=0)
+    onboarded: Mapped[bool] = mapped_column(Boolean, default=False)
+
     transactions: Mapped[list["Transaction"]] = relationship(back_populates="owner")
     budgets: Mapped[list["Budget"]] = relationship(back_populates="owner")
+    categories: Mapped[list["Category"]] = relationship(back_populates="owner")
 
 
 class RefreshSession(Base):
@@ -71,9 +76,30 @@ class Transaction(Base):
     type: Mapped[str] = mapped_column(String(20))  # "income" | "expense"
     amount: Mapped[float] = mapped_column(Float)
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # "manual" from the form, "statement" from a CSV upload
+    source: Mapped[str] = mapped_column(String(20), default="manual")
+    created_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     owner: Mapped["User"] = relationship(back_populates="transactions")
+
+
+class Category(Base):
+    """Names the user can pick. Defaults are created the first time they open the list."""
+
+    __tablename__ = "categories"
+    __table_args__ = (UniqueConstraint("user_id", "name", name="uniq_user_category_name"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(80))
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    owner: Mapped["User"] = relationship(back_populates="categories")
 
 
 class Budget(Base):

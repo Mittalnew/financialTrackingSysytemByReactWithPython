@@ -6,6 +6,7 @@ import { IoAnalyticsOutline, IoLogOutOutline, IoSettingsOutline } from 'react-ic
 import { useAppDispatch, useAppSelector } from '../../store'
 import { logoutUser } from '../../store/authSlice'
 import { clearBudgets } from '../../store/budgetsSlice'
+import { clearCategories } from '../../store/categoriesSlice'
 import { clearTransactions } from '../../store/transactionsSlice'
 import Spinner from '../ui/Spinner'
 import { initials } from '../../utils/format'
@@ -33,8 +34,9 @@ export default function Sidebar({ onNavigate }: Props) {
     onNavigate?.()
     dispatch(clearTransactions())
     dispatch(clearBudgets())
+    dispatch(clearCategories())
     await dispatch(logoutUser())
-    navigate('/login')
+    navigate('/')
   }
 
   return (

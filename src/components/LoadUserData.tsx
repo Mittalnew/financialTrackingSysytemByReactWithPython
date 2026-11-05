@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '../store'
 import { fetchBudgets } from '../store/budgetsSlice'
+import { fetchCategories } from '../store/categoriesSlice'
 import { fetchTransactions } from '../store/transactionsSlice'
 
 /**
@@ -15,6 +16,7 @@ export default function LoadUserData() {
     if (!user) return
     void dispatch(fetchTransactions())
     void dispatch(fetchBudgets())
+    void dispatch(fetchCategories())
   }, [user, dispatch])
 
   return null

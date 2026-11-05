@@ -14,35 +14,55 @@ from sqlalchemy import inspect, text
 
 from config import API_PUBLIC_URL, FRONTEND_URL, cors_allow_origins
 from database import IS_SQLITE, Base, engine
-from routers import auth, budgets, transactions
+from routers import auth, budgets, categories, transactions
 
 # Create any missing tables (Postgres or SQLite)
 Base.metadata.create_all(bind=engine)
 
 
-def _add_user_columns_if_needed() -> None:
-    """
-    Only for old local SQLite files.
-    create_all does NOT add new columns to an existing SQLite table.
-    Fresh Postgres (Neon) gets full schema from create_all — no ALTER needed.
-    """
-    if not IS_SQLITE:
-        return
+def _add_missing_columns() -> None:
+    """create_all does not add columns to a table that already exists."""
     insp = inspect(engine)
-    if "users" not in insp.get_table_names():
-        return
-    cols = {c["name"] for c in insp.get_columns("users")}
-    with engine.begin() as conn:
-        if "email_verified" not in cols:
-            conn.execute(text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 1"))
-            conn.execute(text("UPDATE users SET email_verified = 1"))
-        if "failed_login_count" not in cols:
-            conn.execute(text("ALTER TABLE users ADD COLUMN failed_login_count INTEGER DEFAULT 0"))
-        if "locked_until" not in cols:
-            conn.execute(text("ALTER TABLE users ADD COLUMN locked_until DATETIME"))
+    names = set(insp.get_table_names())
+    flag = "1" if IS_SQLITE else "TRUE"
+
+    if "users" in names:
+        cols = {c["name"] for c in insp.get_columns("users")}
+        with engine.begin() as conn:
+            if IS_SQLITE and "email_verified" not in cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 1"))
+                conn.execute(text("UPDATE users SET email_verified = 1"))
+            if IS_SQLITE and "failed_login_count" not in cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN failed_login_count INTEGER DEFAULT 0"))
+            if IS_SQLITE and "locked_until" not in cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN locked_until DATETIME"))
+            if "savings_goal" not in cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN savings_goal FLOAT DEFAULT 0"))
+            if "onboarded" not in cols:
+                # People already using the app should not be sent through the form.
+                conn.execute(text(f"ALTER TABLE users ADD COLUMN onboarded BOOLEAN DEFAULT {flag}"))
+                conn.execute(text(f"UPDATE users SET onboarded = {flag}"))
+
+    if "transactions" in names:
+        cols = {c["name"] for c in insp.get_columns("transactions")}
+        if "source" not in cols:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE transactions ADD COLUMN source VARCHAR(20) DEFAULT 'manual'"))
+        stamp = "DATETIME" if IS_SQLITE else "TIMESTAMPTZ"
+        for column in ("created_at", "updated_at"):
+            if column not in cols:
+                with engine.begin() as conn:
+                    conn.execute(
+                        text(
+                            f"ALTER TABLE transactions ADD COLUMN {column} {stamp} DEFAULT CURRENT_TIMESTAMP"
+                        )
+                    )
+                    conn.execute(
+                        text(f"UPDATE transactions SET {column} = CURRENT_TIMESTAMP WHERE {column} IS NULL")
+                    )
 
 
-_add_user_columns_if_needed()
+_add_missing_columns()
 
 app = FastAPI(
     title="Fintrack API",
@@ -63,6 +83,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(transactions.router)
 app.include_router(budgets.router)
+app.include_router(categories.router)
 
 
 @app.get("/")

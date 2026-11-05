@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { HiOutlineFlag, HiOutlineLockClosed, HiOutlineUser } from 'react-icons/hi2'
 import { apiChangePassword } from '../api'
 import Button from '../components/ui/Button'
@@ -8,11 +8,12 @@ import Spinner, { PageLoader, useDataReady } from '../components/ui/Spinner'
 import Card from '../components/ui/Card'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
-import { BUDGET_CATEGORIES } from '../constants'
+import CategoryField from '../components/CategoryField'
 import { useToast } from '../context/ToastContext'
 import { useAppDispatch, useAppSelector } from '../store'
 import { logoutUser, saveProfile } from '../store/authSlice'
 import { clearBudgets, removeBudget, setBudget } from '../store/budgetsSlice'
+import { clearCategories } from '../store/categoriesSlice'
 import { clearTransactions } from '../store/transactionsSlice'
 import { budgetProgress } from '../utils/budgets'
 import { currentMonth, formatINR, initials } from '../utils/format'
@@ -30,7 +31,7 @@ export default function Settings() {
   const [email, setEmail] = useState(user.email)
   const [currency, setCurrency] = useState(user.currency)
 
-  const [category, setCategory] = useState<string>(BUDGET_CATEGORIES[0])
+  const [category, setCategory] = useState('Food')
   const [limit, setLimit] = useState('5000')
 
   const [currentPassword, setCurrentPassword] = useState('')
@@ -63,8 +64,9 @@ export default function Settings() {
     setLoggingOut(true)
     dispatch(clearTransactions())
     dispatch(clearBudgets())
+    dispatch(clearCategories())
     await dispatch(logoutUser())
-    navigate('/login')
+    navigate('/')
   }
 
   async function handleChangePassword(e: FormEvent) {
@@ -133,6 +135,9 @@ export default function Settings() {
           Account
         </p>
         <h1 className="mt-2 text-2xl font-semibold text-[#14201c]">Settings</h1>
+        <Link to="/onboarding" className="mt-1 inline-block text-sm font-medium text-[#0b7a6e] hover:text-[#086057]">
+          Edit plan
+        </Link>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-5">
@@ -238,11 +243,11 @@ export default function Settings() {
             className="mb-5 flex flex-wrap items-end gap-3 rounded-2xl bg-[#f4f8f5] p-3"
           >
             <div className="min-w-36 flex-1">
-              <Select
+              <CategoryField
                 label="Category"
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                options={BUDGET_CATEGORIES.map((c) => ({ value: c, label: c }))}
+                onChange={setCategory}
+                includeSalary={false}
               />
             </div>
             <div className="min-w-32 flex-1">

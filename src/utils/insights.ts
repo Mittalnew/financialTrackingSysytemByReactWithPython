@@ -26,6 +26,58 @@ export function previousMonth(month: string) {
   return `${date.getFullYear()}-${m}`
 }
 
+export type MoneyDelta = { diff: number; text: string }
+
+function moneyDelta(current: number, previous: number): MoneyDelta {
+  const diff = current - previous
+  if (Math.round(diff) === 0) return { diff: 0, text: 'Same as last month' }
+  const amount = formatINR(Math.abs(diff))
+  if (diff > 0) return { diff, text: `${amount} more than last month` }
+  return { diff, text: `${amount} less than last month` }
+}
+
+/** Salary, spend, and leftover compared with the previous month. */
+export function versusLastMonth(items: Transaction[], month: string) {
+  const now = monthCashflow(items, month)
+  const prev = monthCashflow(items, previousMonth(month))
+  return {
+    hasPrevious: prev.income > 0 || prev.spent > 0,
+    income: moneyDelta(now.income, prev.income),
+    spent: moneyDelta(now.spent, prev.spent),
+    left: moneyDelta(now.left, prev.left),
+    now,
+  }
+}
+
+/**
+ * How far the month has gone, next to how much of the plan is used.
+ * Budgets are the plan. With no budgets, income is the plan.
+ */
+export function monthPace(
+  items: Transaction[],
+  budgets: Budget[],
+  month: string,
+  today = todayISO(),
+) {
+  const cash = monthCashflow(items, month)
+  const [year, mon] = month.split('-').map(Number)
+  const days = new Date(year, mon, 0).getDate()
+  const day = today.startsWith(month) ? Number(today.slice(8, 10)) : days
+  const elapsed = Math.round((day / days) * 100)
+  const planned = budgets.reduce((sum, budget) => sum + budget.limit, 0)
+  const base = planned > 0 ? planned : cash.income
+  const used = base > 0 ? Math.round((cash.spent / base) * 100) : 0
+  const label = `${day} ${SHORT_MONTHS[mon - 1]}`
+  return {
+    label,
+    elapsed,
+    used,
+    ahead: base > 0 && used > elapsed,
+    ready: base > 0,
+    comparesToPlan: planned > 0,
+  }
+}
+
 /**
  * One short tip for the user.
  * Keep this dumb and readable — no AI, just if/else on numbers.
@@ -84,6 +136,7 @@ export function safeToSpend(
   budgets: Budget[],
   month: string,
   today = todayISO(),
+  savingsGoal = 0,
 ) {
   const cash = monthCashflow(items, month)
   const planned = budgets.reduce((sum, budget) => sum + budget.limit, 0)
@@ -94,7 +147,7 @@ export function safeToSpend(
   }, 0)
 
   const hasBudgets = planned > 0
-  const pool = hasBudgets ? cash.income - planned : cash.income - cash.spent
+  const pool = (hasBudgets ? cash.income - planned : cash.income - cash.spent) - savingsGoal
   const perDay = pool / daysLeft
   const todaySafe = hasBudgets ? perDay - spentToday : perDay
 
@@ -151,6 +204,7 @@ export function previewSpend(
   budgets: Budget[],
   draft: { id?: string; type: 'income' | 'expense'; amount: number; category: string; date: string },
   today = todayISO(),
+  savingsGoal = 0,
 ): SpendPreview | null {
   if (!draft.amount || draft.amount < 1 || !draft.date) return null
 
@@ -185,8 +239,8 @@ export function previewSpend(
     }
   }
 
-  const beforeSafe = safeToSpend(items, budgets, today.slice(0, 7), today).todaySafe
-  const afterSafe = safeToSpend(next, budgets, today.slice(0, 7), today).todaySafe
+  const beforeSafe = safeToSpend(items, budgets, today.slice(0, 7), today, savingsGoal).todaySafe
+  const afterSafe = safeToSpend(next, budgets, today.slice(0, 7), today, savingsGoal).todaySafe
   if (Math.round(beforeSafe) !== Math.round(afterSafe)) {
     lines.push(
       `Today’s safe limit goes from ${formatINR(beforeSafe)} to ${formatINR(afterSafe)}.`,
@@ -256,4 +310,48 @@ export function paceWarnings(
     })
   }
   return warnings
+}
+
+export type ReportLine = { tone: 'ok' | 'warn'; text: string }
+
+/** Plan vs what was actually spent. Empty until there is some money movement. */
+export function monthReport(
+  items: Transaction[],
+  budgets: Budget[],
+  month: string,
+  savingsGoal = 0,
+): ReportLine[] {
+  const cash = monthCashflow(items, month)
+  if (cash.income === 0 && cash.spent === 0) return []
+
+  const lines: ReportLine[] = []
+  const inside: string[] = []
+  for (const budget of budgets) {
+    const spent = spentInMonth(items, month, budget.category)
+    if (spent > budget.limit) {
+      lines.push({
+        tone: 'warn',
+        text: `${budget.category} is ${formatINR(spent - budget.limit)} over the plan.`,
+      })
+    } else if (spent > 0) {
+      inside.push(budget.category)
+    }
+  }
+
+  if (savingsGoal > 0 && cash.income > 0) {
+    if (cash.left >= savingsGoal) {
+      lines.push({ tone: 'ok', text: `Save goal is met. ${formatINR(cash.left)} is left.` })
+    } else {
+      lines.push({
+        tone: 'warn',
+        text: `Save goal is short by ${formatINR(savingsGoal - cash.left)}.`,
+      })
+    }
+  }
+
+  if (inside.length > 0) {
+    const verb = inside.length === 1 ? 'is' : 'are'
+    lines.push({ tone: 'ok', text: `${inside.join(', ')} ${verb} inside the plan.` })
+  }
+  return lines
 }

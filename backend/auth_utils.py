@@ -152,6 +152,8 @@ def user_to_out(user: User):
         name=user.name,
         email=user.email,
         currency=user.currency,
+        savings_goal=user.savings_goal or 0,
+        onboarded=bool(user.onboarded),
     )
 
 
